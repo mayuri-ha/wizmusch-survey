@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ポケットシーシャに関するアンケート</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 16px; }
+  body {
+    background: #f9f9f7;
+    font-family: 'Helvetica Neue', 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif;
+    color: #1a1a1a;
+    min-height: 100vh;
+  }
+  #root { min-height: 100vh; }
+
+  .container {
+    max-width: 560px;
+    margin: 0 auto;
+    padding: 48px 24px 80px;
+    min-height: 100vh;
+  }
+
+  /* Progress */
+  .progress-wrap { margin-bottom: 36px; }
+  .progress-meta { display: flex; justify-content: space-between; margin-bottom: 8px; }
+  .progress-meta span { font-size: 12px; color: #999; }
+  .progress-bar { width: 100%; height: 2px; background: #e8e8e6; border-radius: 1px; }
+  .progress-fill { height: 2px; background: #1a1a1a; border-radius: 1px; transition: width 0.4s ease; }
+
+  /* Intro */
+  .intro-label { font-size: 11px; font-weight: 500; letter-spacing: 2px; color: #bbb; text-transform: uppercase; margin-bottom: 20px; }
+  .intro-title { font-size: 26px; font-weight: 600; line-height: 1.5; margin-bottom: 20px; }
+  .intro-body { font-size: 15px; color: #666; line-height: 1.8; margin-bottom: 10px; }
+  .intro-note { font-size: 13px; color: #aaa; line-height: 1.6; margin-top: 28px; margin-bottom: 40px; }
+
+  /* Question */
+  .question-block { margin-bottom: 40px; }
+  .question-text { font-size: 15px; font-weight: 500; line-height: 1.65; margin-bottom: 4px; }
+  .question-required { color: #c24b3b; margin-left: 4px; font-size: 13px; }
+  .question-sub { font-size: 13px; color: #999; margin-bottom: 12px; margin-top: 4px; }
+
+  /* Options */
+  .option-list { display: flex; flex-direction: column; gap: 6px; }
+  .option-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px; border-radius: 8px;
+    border: 1px solid #e0e0de;
+    cursor: pointer; transition: border-color 0.15s, background 0.15s;
+    font-size: 14px; color: #333; user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .option-item:hover { border-color: #ccc; background: #fafaf8; }
+  .option-item.selected { border: 1.5px solid #1a1a1a; background: #fafaf8; }
+  .option-item.disabled { opacity: 0.45; cursor: not-allowed; }
+
+  .radio-dot {
+    width: 18px; height: 18px; border-radius: 50%;
+    border: 2px solid #ccc; flex-shrink: 0;
+    transition: border 0.15s; display: flex; align-items: center; justify-content: center;
+  }
+  .option-item.selected .radio-dot { border: 5px solid #1a1a1a; }
+
+  .checkbox-box {
+    width: 18px; height: 18px; border-radius: 4px;
+    border: 2px solid #ccc; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+  }
+  .option-item.selected .checkbox-box { border: none; background: #1a1a1a; }
+
+  .other-input {
+    margin-top: 6px; margin-left: 28px;
+    width: calc(100% - 28px);
+    padding: 8px 12px; border: 1px solid #e0e0de;
+    border-radius: 6px; font-size: 14px; font-family: inherit;
+    outline: none; color: #1a1a1a; background: #fff;
+    transition: border-color 0.15s;
+  }
+  .other-input:focus { border-color: #aaa; }
+
+  /* Concept grid */
+  .concept-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+  .concept-card {
+    padding: 16px; border-radius: 8px;
+    border: 1px solid #e0e0de; cursor: pointer;
+    transition: all 0.15s; text-align: center;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .concept-card:hover { border-color: #ccc; background: #fafaf8; }
+  .concept-card.selected { border: 1.5px solid #1a1a1a; background: #fafaf8; }
+  .concept-card p { font-size: 14px; font-weight: 500; }
+  .concept-card small { font-size: 12px; color: #888; line-height: 1.4; display: block; margin-top: 6px; }
+
+  /* Textarea */
+  .survey-textarea {
+    width: 100%; padding: 10px 14px;
+    border: 1px solid #e0e0de; border-radius: 8px;
+    font-size: 14px; font-family: inherit; line-height: 1.6;
+    resize: vertical; outline: none; color: #1a1a1a; background: #fff;
+    transition: border-color 0.15s;
+  }
+  .survey-textarea:focus { border-color: #aaa; }
+
+  /* Error */
+  .error-msg { color: #c24b3b; font-size: 13px; margin-top: 6px; }
+  .submit-error { color: #c24b3b; font-size: 14px; text-align: center; margin-bottom: 16px; }
+
+  /* Buttons */
+  .btn-row { display: flex; gap: 12px; margin-top: 16px; }
+  .btn-primary {
+    flex: 2; padding: 14px 0;
+    background: #1a1a1a; color: #fff; border: none;
+    border-radius: 8px; font-size: 15px; font-weight: 500;
+    cursor: pointer; font-family: inherit;
+    transition: opacity 0.15s;
+  }
+  .btn-primary:hover { opacity: 0.85; }
+  .btn-primary:disabled { background: #999; cursor: wait; }
+  .btn-secondary {
+    flex: 1; padding: 14px 0;
+    background: transparent; color: #1a1a1a;
+    border: 1px solid #e0e0de; border-radius: 8px;
+    font-size: 15px; font-weight: 500;
+    cursor: pointer; font-family: inherit;
+    transition: background 0.15s;
+  }
+  .btn-secondary:hover { background: #f5f5f3; }
+  .btn-full { flex: 1; }
+
+  /* Complete */
+  .complete-wrap {
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    text-align: center; padding-top: 80px;
+  }
+  .complete-icon {
+    width: 56px; height: 56px; border-radius: 50%;
+    background: #1a1a1a; display: flex;
+    align-items: center; justify-content: center; margin-bottom: 24px;
+  }
+  .complete-title { font-size: 22px; font-weight: 600; margin-bottom: 12px; }
+  .complete-body { font-size: 15px; color: #666; line-height: 1.7; max-width: 340px; }
+
+  @media (max-width: 480px) {
+    .container { padding: 32px 16px 60px; }
+    .intro-title { font-size: 22px; }
+    .concept-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+
+<script>
+const GAS_URL = "https://script.google.com/macros/s/AKfycbxIFktEQ3DbzEZ6uo3sqWYyf8bhrtFWYxiEo1E0zQQdzsc-0oM-muQGouUC3Mzr18km/exec";
+
+const SECTIONS = [
+  {
+    id: "common1", title: "基本情報",
+    condition: () => true,
+    questions: [
+      { id:"q1", text:"あなたの年齢を教えてください", type:"radio", required:true,
+        options:["18〜22歳","23〜26歳","27〜30歳","31〜35歳","36歳以上"] },
+      { id:"q2", text:"あなたの性別を教えてください", type:"radio", required:true,
+        options:["男性","女性","その他 / 回答しない"] },
+      { id:"q3", text:"シーシャ店（シーシャバー・シーシャカフェ）にはどのくらいの頻度で行きますか？", type:"radio", required:true,
+        options:["週に2回以上","週に1回程度","月に2〜3回","月に1回程度","2〜3ヶ月に1回程度","それ以下 / ほとんど行かない"] },
+      { id:"q4", text:"ポケットシーシャまたはVape（電子タバコ）を使ったことはありますか？", type:"radio", required:true,
+        options:["ポケットシーシャを使ったことがある","Vape（電子タバコ）を使ったことがある","両方使ったことがある","どちらも使ったことがない"] },
+      { id:"q5", text:"普段、欲しいものがあったときに最もよく買い物をする場所はどこですか？", type:"radio", required:true, hasOther:true,
+        options:["コンビニ・ドラッグストアなど実店舗","ドン・キホーテなどバラエティショップ","Amazon","楽天市場","メーカー公式サイト / ブランドEC","その他"] },
+      { id:"q6", text:"ポケットシーシャやVapeに関する情報を、普段どこで目にしますか？", sub:"複数選択可", type:"checkbox", required:true, hasOther:true,
+        options:["Instagram","X（Twitter）","TikTok","YouTube","友人・知人の口コミ","Google検索","店頭（コンビニ / ドンキ等）で見かけて","特に情報収集していない","その他"] },
+      { id:"q7", text:"最もよく使うSNSを教えてください", sub:"最大2つまで選択", type:"checkbox", required:true, maxSelect:2, hasOther:true,
+        options:["Instagram","X（Twitter）","TikTok","YouTube","LINE","Facebook","その他"] },
+    ]
+  },
+  {
+    id: "experienced", title: "ポケットシーシャ / Vapeの利用経験",
+    condition: (a) => a.q4 && a.q4 !== "どちらも使ったことがない",
+    questions: [
+      { id:"q8", text:"知っている、または見たことがあるポケットシーシャ・Vapeのブランドを全て選んでください", type:"checkbox", required:true, hasOther:true,
+        options:["CHILLAXY","SHISHA BERRY","DR.VAPE","SLASH","ELFBAR","JUUL","myblu","FLEVO","特にブランド名は覚えていない","その他"] },
+      { id:"q9", text:"上の質問で選んだブランドの中で、実際に使ったことがあるものを全て選んでください", type:"checkbox", required:true, hasOther:true,
+        options:["CHILLAXY","SHISHA BERRY","DR.VAPE","SLASH","ELFBAR","JUUL","myblu","FLEVO","使ったことがあるものはない","その他"] },
+      { id:"q10", text:"使ったことのある製品について、満足しているポイントを全て選んでください", type:"checkbox", required:true,
+        options:["フレーバー（味）が良い","煙の量が十分","サイズ感・持ち運びやすさ","デザイン・見た目","価格が手頃","手軽に使える（充電不要 / 使い捨て）","コンビニ等で手に入りやすい","特にない"] },
+      { id:"q11", text:"逆に、不満に感じているポイントがあれば全て選んでください", type:"checkbox", required:false,
+        options:["フレーバー（味）がイマイチ","煙の量が物足りない","吸引回数（パフ数）が少ない","デザインがダサい / 安っぽい","価格が高い","充電が面倒","液漏れ・故障が多い","匂いが気になる","特にない"] },
+      { id:"q12", text:"ポケットシーシャ・Vapeを買うとき、どこで探しますか？", sub:"複数選択可", type:"checkbox", required:true, hasOther:true,
+        options:["コンビニ（セブン / ファミマ / ローソン等）","ドン・キホーテ","Amazon","楽天市場","Vape / シーシャ専門の通販サイト","シーシャバー・Vapeショップ（実店舗）","メルカリ等のフリマアプリ","その他"] },
+      { id:"q13", text:"ポケットシーシャ・Vapeを購入するとき、重視するポイントの上位3つを選んでください", sub:"最大3つまで選択", type:"checkbox", required:true, maxSelect:3,
+        options:["フレーバー（味）の種類・おいしさ","価格の安さ","煙の量","吸引回数（パフ数）の多さ","デザイン・見た目","手軽さ（使い捨て / 充電不要など）","口コミ・評判の良さ","安全性（成分・ニコチンフリー等）","入手しやすさ（近所で買える）"] },
+      { id:"q14", text:"ポケットシーシャ・Vapeを買う前に、どんな情報を参考にしますか？", sub:"複数選択可", type:"checkbox", required:true, hasOther:true,
+        options:["Amazonや楽天のレビュー","YouTubeのレビュー動画","InstagramやTikTokの投稿","友人・知人のおすすめ","ブログやまとめ記事","店員のおすすめ","特に調べずに買う","その他"] },
+      { id:"q15", text:"同じ製品をリピート購入したことはありますか？ある場合、最大の理由を教えてください", type:"radio", required:true, hasOther:true,
+        options:["味が気に入ったから","価格が手頃だから","近所で買えるから","他に良い製品が見つからないから","習慣になったから","リピート購入したことはない","その他"] },
+      { id:"q16", text:"ポケットシーシャ・Vapeを買わなくなった（または頻度が減った）理由があれば教えてください", sub:"複数選択可", type:"checkbox", required:false,
+        options:["味に飽きた","コスパが悪いと感じた","吸引回数が少なくて不満","健康が気になった","他の製品に乗り換えた","そもそも継続的には買っていない","特になし / 今も買っている"] },
+      { id:"q17", text:"「これが決め手で買った」というエピソードがあれば教えてください", type:"textarea", required:false,
+        placeholder:"例：友達が吸ってるのを見ておいしそうだったから…" },
+      { id:"q18", text:"「買って後悔した」「思っていたのと違った」という経験があれば教えてください", type:"textarea", required:false,
+        placeholder:"例：煙の量が全然出なくてがっかりした…" },
+      { id:"q19", text:"今使っている製品に「こんな機能があったらいいのに」と思うことがあれば教えてください", type:"textarea", required:false,
+        placeholder:"自由にお書きください" },
+    ]
+  },
+  {
+    id: "inexperienced", title: "ポケットシーシャへの興味",
+    condition: (a) => a.q4 === "どちらも使ったことがない",
+    questions: [
+      { id:"q20", text:"「ニコチンフリーで手軽に持ち運べるシーシャ」があったら、使ってみたいと思いますか？", type:"radio", required:true,
+        options:["ぜひ使ってみたい","やや使ってみたい","どちらでもない","あまり使いたくない","使いたくない"] },
+      { id:"q21", text:"もしポケットシーシャを1本買うとしたら、いくらくらいまでなら出しても良いと思いますか？", type:"radio", required:true,
+        options:["500円以下","500〜1,000円","1,000〜1,500円","1,500〜2,000円","2,000〜3,000円","3,000円以上"] },
+    ]
+  },
+  {
+    id: "common2", title: "製品への期待",
+    condition: () => true,
+    questions: [
+      { id:"q22", text:"ポケットシーシャに最も期待する要素の上位3つを選んでください", sub:"最大3つまで選択", type:"checkbox", required:true, maxSelect:3,
+        options:["フレーバー（味）のおいしさ","煙の量の多さ","フレーバーの種類が豊富","デザイン・見た目のおしゃれさ","持ち運びやすいサイズ感","使い方の手軽さ","価格の安さ","吸引回数（パフ数）の多さ","安全性（ニコチンフリー等）"] },
+      { id:"q23", text:"以下のフレーバーの中で、吸ってみたいと思うものを全て選んでください", type:"checkbox", required:true, hasOther:true,
+        options:["ストロベリー","ブルーベリー","ミント","コーラ","レモン","緑茶","マスカット","ピーチ","バニラ","エナジードリンク","その他"] },
+      { id:"q24", text:"どんなデザイン（見た目）のポケットシーシャがあったら欲しいですか？", sub:"複数選択可", type:"checkbox", required:true,
+        options:["高級感がある（マット / メタリック）","シンプル・ミニマル","カラフル・ポップ","かわいい・パステル系","ストリート・カジュアル","有名ブランドやキャラクターとのコラボ","特にこだわらない"] },
+      { id:"q25", text:"日常の中で、新しい商品やブランドを最初に知るきっかけとして最も多いのはどれですか？", type:"radio", required:true, hasOther:true,
+        options:["Instagram / TikTokの広告や投稿","YouTubeの動画・広告","友人・知人のおすすめ","インフルエンサー・有名人の紹介","店頭で見かけて","Google検索","X（Twitter）のポスト","その他"] },
+      { id:"q26", text:"ポケットシーシャをギフト・プレゼントとして人にあげたいと思いますか？", type:"radio", required:true,
+        options:["とてもあげたい","ややあげたい","どちらでもない","あまりあげたくない","あげたくない"] },
+      { id:"q27", text:"以下の商品の中で、最も購入したいと思うものを1つ選んでください", sub:"選んだ理由もお聞かせください", type:"concept", required:true,
+        options:[
+          { label:"商品 A", desc:"※実際の商品画像・スペックをここに掲載" },
+          { label:"商品 B", desc:"※実際の商品画像・スペックをここに掲載" },
+          { label:"商品 C", desc:"※実際の商品画像・スペックをここに掲載" },
+          { label:"どれも購入したいと思わない", desc:"" }
+        ]
+      },
+    ]
+  }
+];
+
+const EXCLUSIVE = ["特にブランド名は覚えていない","使ったことがあるものはない","特にない","特になし / 今も買っている","特に情報収集していない"];
+
+const { useState, useRef } = React;
+
+function CheckIcon() {
+  return React.createElement('svg', { width:12, height:12, viewBox:"0 0 12 12", fill:"none" },
+    React.createElement('path', { d:"M2 6L5 9L10 3", stroke:"white", strokeWidth:2, strokeLinecap:"round", strokeLinejoin:"round" })
+  );
+}
+
+function QuestionBlock({ q, answers, setAnswer, error }) {
+  const val = answers[q.id];
+  const otherKey = q.id + "_other";
+
+  const handleRadio = (opt) => {
+    setAnswer(q.id, opt);
+    if (opt !== "その他") setAnswer(otherKey, "");
+  };
+
+  const handleCheck = (opt) => {
+    const cur = Array.isArray(val) ? [...val] : [];
+    if (EXCLUSIVE.includes(opt)) {
+      setAnswer(q.id, cur.includes(opt) ? [] : [opt]);
+      return;
+    }
+    const cleaned = cur.filter(v => !EXCLUSIVE.includes(v));
+    if (cleaned.includes(opt)) {
+      setAnswer(q.id, cleaned.filter(v => v !== opt));
+    } else {
+      if (q.maxSelect && cleaned.length >= q.maxSelect) return;
+      setAnswer(q.id, [...cleaned, opt]);
+    }
+  };
+
+  const isChecked = (opt) => Array.isArray(val) && val.includes(opt);
+  const atMax = q.maxSelect && Array.isArray(val) && val.length >= q.maxSelect;
+
+  return React.createElement('div', { className: 'question-block' },
+    React.createElement('p', { className: 'question-text' },
+      q.text,
+      q.required && React.createElement('span', { className: 'question-required' }, '*')
+    ),
+    q.sub && React.createElement('p', { className: 'question-sub' }, q.sub),
+
+    // Radio
+    q.type === 'radio' && React.createElement('div', { className: 'option-list' },
+      q.options.map(opt =>
+        React.createElement('label', {
+          key: opt,
+          className: 'option-item' + (val === opt ? ' selected' : ''),
+          onClick: () => handleRadio(opt)
+        },
+          React.createElement('div', { className: 'radio-dot' }),
+          opt
+        )
+      ),
+      q.hasOther && val === 'その他' && React.createElement('input', {
+        type: 'text', className: 'other-input',
+        placeholder: '具体的に教えてください',
+        value: answers[otherKey] || '',
+        onChange: e => setAnswer(otherKey, e.target.value)
+      })
+    ),
+
+    // Checkbox
+    q.type === 'checkbox' && React.createElement('div', { className: 'option-list' },
+      q.options.map(opt => {
+        const checked = isChecked(opt);
+        const disabled = atMax && !checked;
+        return React.createElement('label', {
+          key: opt,
+          className: 'option-item' + (checked ? ' selected' : '') + (disabled ? ' disabled' : ''),
+          onClick: disabled ? null : () => handleCheck(opt)
+        },
+          React.createElement('div', { className: 'checkbox-box' },
+            checked && React.createElement(CheckIcon)
+          ),
+          opt
+        );
+      }),
+      q.hasOther && isChecked('その他') && React.createElement('input', {
+        type: 'text', className: 'other-input',
+        placeholder: '具体的に教えてください',
+        value: answers[otherKey] || '',
+        onChange: e => setAnswer(otherKey, e.target.value)
+      })
+    ),
+
+    // Textarea
+    q.type === 'textarea' && React.createElement('textarea', {
+      className: 'survey-textarea', rows: 3,
+      placeholder: q.placeholder || '自由にお書きください',
+      value: val || '',
+      onChange: e => setAnswer(q.id, e.target.value)
+    }),
+
+    // Concept
+    q.type === 'concept' && React.createElement('div', null,
+      React.createElement('div', { className: 'concept-grid' },
+        q.options.map(opt =>
+          React.createElement('div', {
+            key: opt.label,
+            className: 'concept-card' + (val === opt.label ? ' selected' : ''),
+            onClick: () => setAnswer(q.id, opt.label)
+          },
+            React.createElement('p', null, opt.label),
+            opt.desc && React.createElement('small', null, opt.desc)
+          )
+        )
+      ),
+      val && val !== 'どれも購入したいと思わない' && React.createElement('textarea', {
+        className: 'survey-textarea', rows: 2,
+        placeholder: '選んだ理由を教えてください',
+        value: answers[q.id + '_reason'] || '',
+        onChange: e => setAnswer(q.id + '_reason', e.target.value)
+      })
+    ),
+
+    error && React.createElement('p', { className: 'error-msg' }, error)
+  );
+}
+
+function App() {
+  const [step, setStep] = useState(0);
+  const [answers, setAnswers] = useState({});
+  const [errors, setErrors] = useState({});
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState(null);
+  const topRef = useRef(null);
+
+  const active = SECTIONS.filter(s => s.condition(answers));
+  const total = active.length;
+
+  const setAnswer = (key, val) => {
+    setAnswers(prev => ({ ...prev, [key]: val }));
+    setErrors(prev => { const n = { ...prev }; delete n[key]; return n; });
+  };
+
+  const validate = (sec) => {
+    const errs = {};
+    sec.questions.forEach(q => {
+      if (!q.required) return;
+      const v = answers[q.id];
+      if (q.type === 'radio' || q.type === 'concept') { if (!v) errs[q.id] = '回答を選択してください'; }
+      else if (q.type === 'checkbox') { if (!Array.isArray(v) || !v.length) errs[q.id] = '1つ以上選択してください'; }
+    });
+    return errs;
+  };
+
+  const scrollTop = () => topRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  const handleNext = async () => {
+    if (step === 0) { setStep(1); scrollTop(); return; }
+    const sec = active[step - 1];
+    const errs = validate(sec);
+    if (Object.keys(errs).length) { setErrors(errs); return; }
+    if (step < total) { setStep(step + 1); scrollTop(); return; }
+    // Submit
+    setSubmitting(true);
+    setSubmitError(null);
+    try {
+      const payload = { timestamp: new Date().toISOString(), ...answers };
+      // Arrays → comma-separated string for sheets
+      const flat = {};
+      Object.entries(payload).forEach(([k, v]) => { flat[k] = Array.isArray(v) ? v.join(', ') : (v || ''); });
+      await fetch(GAS_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify(flat),
+        mode: 'no-cors'
+      });
+      setStep(total + 1);
+      scrollTop();
+    } catch (e) {
+      setSubmitError('送信に失敗しました。もう一度お試しください。');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleBack = () => { if (step > 0) { setStep(step - 1); scrollTop(); } };
+
+  // Intro
+  if (step === 0) return React.createElement('div', { className: 'container', ref: topRef },
+    React.createElement('p', { className: 'intro-label' }, 'Survey'),
+    React.createElement('h1', { className: 'intro-title' }, 'ポケットシーシャに関する\nアンケート'),
+    React.createElement('p', { className: 'intro-body' }, '本アンケートは、シーシャ店に行ったことがある方を対象に、ポケットシーシャ（持ち運びシーシャ）に関するご意見をお聞きするものです。'),
+    React.createElement('p', { className: 'intro-body' }, '所要時間は約5〜8分です。回答は全て匿名で処理されます。'),
+    React.createElement('p', { className: 'intro-note' }, 'ご協力いただいた方の中から抽選でギフトカードをプレゼントいたします。'),
+    React.createElement('button', { className: 'btn-primary btn-full', onClick: handleNext }, 'アンケートを始める')
+  );
+
+  // Complete
+  if (step > total) return React.createElement('div', { className: 'container', ref: topRef },
+    React.createElement('div', { className: 'complete-wrap' },
+      React.createElement('div', { className: 'complete-icon' },
+        React.createElement('svg', { width:24, height:24, viewBox:"0 0 24 24", fill:"none" },
+          React.createElement('path', { d:"M5 12L10 17L19 7", stroke:"white", strokeWidth:2.5, strokeLinecap:"round", strokeLinejoin:"round" })
+        )
+      ),
+      React.createElement('h2', { className: 'complete-title' }, 'ご回答ありがとうございました'),
+      React.createElement('p', { className: 'complete-body' }, 'いただいた回答は今後の製品開発の参考にさせていただきます。')
+    )
+  );
+
+  // Questions
+  const sec = active[step - 1];
+  return React.createElement('div', { className: 'container', ref: topRef },
+    React.createElement('div', { className: 'progress-wrap' },
+      React.createElement('div', { className: 'progress-meta' },
+        React.createElement('span', null, step + ' / ' + total),
+        React.createElement('span', null, sec.title)
+      ),
+      React.createElement('div', { className: 'progress-bar' },
+        React.createElement('div', { className: 'progress-fill', style: { width: (step / total * 100) + '%' } })
+      )
+    ),
+    sec.questions.map(q => React.createElement(QuestionBlock, {
+      key: q.id, q, answers, setAnswer, error: errors[q.id]
+    })),
+    submitError && React.createElement('p', { className: 'submit-error' }, submitError),
+    React.createElement('div', { className: 'btn-row' },
+      step > 1 && React.createElement('button', { className: 'btn-secondary', onClick: handleBack }, '戻る'),
+      React.createElement('button', {
+        className: 'btn-primary',
+        onClick: handleNext,
+        disabled: submitting
+      }, submitting ? '送信中...' : step < total ? '次へ' : '回答を送信する')
+    )
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(App));
+</script>
+</body>
+</html>
