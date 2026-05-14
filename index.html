@@ -129,6 +129,21 @@
     padding: 14px; min-height: auto;
   }
   .concept-card-none p { margin-top: 0; }
+  .concept-reason {
+    margin-top: 16px;
+    padding: 14px 16px;
+    background: #fafaf8;
+    border-radius: 8px;
+    border: 1px solid #ececea;
+  }
+  .concept-reason-label {
+    display: block;
+    font-size: 13px; font-weight: 500;
+    color: #1a1a1a; margin-bottom: 8px;
+  }
+  .concept-reason .survey-textarea {
+    background: #fff;
+  }
 
   /* Textarea */
   .survey-textarea {
@@ -330,7 +345,7 @@ const SECTIONS = [
         options:["週に2回以上","週に1回程度","月に2〜3回","月に1回程度","2〜3ヶ月に1回程度","それ以下 / ほとんど行かない"] },
       { id:"q4", text:"ポケットシーシャ（またはVape）を使ったことはありますか？", sub:"本アンケートではポケットシーシャとVapeを同じものとして扱います", type:"radio", required:true,
         options:["はい","いいえ"] },
-      { id:"q5", text:"普段、欲しいものがあったときに最もよく買い物をする場所はどこですか？", sub:"よく使う順に1位〜3位を選んでください", type:"ranking", required:true, rankCount:3,
+      { id:"q5", text:"普段、欲しいものがあったときに最もよく買い物をする場所はどこですか？", sub:"1位は必須、2位・3位は任意です", type:"ranking", required:true, rankCount:3, minRank:1,
         options:["コンビニ・ドラッグストアなど実店舗","ドン・キホーテなどバラエティショップ","Amazon","楽天市場","メーカー公式サイト / ブランドEC","SHEIN・Temuなど海外EC","その他"] },
       { id:"q6", text:"ポケットシーシャ（またはVape）に関する情報を、普段どこで目にしますか？", sub:"複数選択可", type:"checkbox", required:true, hasOther:true,
         options:["Instagram","X（Twitter）","TikTok","YouTube","友人・知人の口コミ","Google検索","日本国内の店頭（コンビニ / ドンキ等）で見かけて","海外の店頭・現地ショップで見かけて","特に情報収集していない","その他"] },
@@ -550,12 +565,17 @@ function QuestionBlock({ q, answers, setAnswer, error, questionNumber }) {
           );
         })
       ),
-      val && val !== 'どれも購入したいと思わない' && React.createElement('textarea', {
-        className: 'survey-textarea', rows: 2,
-        placeholder: '選んだ理由を教えてください',
-        value: answers[q.id + '_reason'] || '',
-        onChange: e => setAnswer(q.id + '_reason', e.target.value)
-      })
+      val && val !== 'どれも購入したいと思わない' && React.createElement('div', {
+        className: 'concept-reason'
+      },
+        React.createElement('label', { className: 'concept-reason-label' }, '選んだ理由（任意）'),
+        React.createElement('textarea', {
+          className: 'survey-textarea', rows: 3,
+          placeholder: '例：デザインが好み、サイズ感が良さそう、価格が手頃 など',
+          value: answers[q.id + '_reason'] || '',
+          onChange: e => setAnswer(q.id + '_reason', e.target.value)
+        })
+      )
     ),
 
     error && React.createElement('p', { className: 'error-msg' }, error)
@@ -586,7 +606,12 @@ function App() {
       if (q.type === 'radio' || q.type === 'concept') { if (!v) errs[q.id] = '回答を選択してください'; }
       else if (q.type === 'checkbox') { if (!Array.isArray(v) || !v.length) errs[q.id] = '1つ以上選択してください'; }
       else if (q.type === 'ranking') {
-        if (!Array.isArray(v) || v.length < q.rankCount) errs[q.id] = q.rankCount + '位まで全て選択してください';
+        const requiredRank = q.minRank || q.rankCount;
+        if (!Array.isArray(v) || v.length < requiredRank) {
+          errs[q.id] = requiredRank === 1
+            ? '少なくとも1位を選択してください'
+            : requiredRank + '位まで選択してください';
+        }
       }
     });
     return errs;
